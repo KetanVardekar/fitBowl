@@ -5,9 +5,47 @@ import { ingredients, Ingredient } from "@/data/ingredients";
 
 const WHATSAPP_NUMBER = "919999999999"; // Replace with actual WhatsApp number
 
+interface Preset {
+  id: string;
+  name: string;
+  price: number;
+  emoji: string;
+  tagline: string;
+  ingredientIds: string[];
+  badge: string;
+  accentColor: string;
+  bgColor: string;
+}
+
+const PRESETS: Preset[] = [
+  {
+    id: "basic",
+    name: "Basic Bowl",
+    price: 49,
+    emoji: "🥗",
+    tagline: "Light & wholesome",
+    ingredientIds: ["mung", "chana", "tomato", "cucumber"],
+    badge: "Most Popular",
+    accentColor: "from-green-400 to-emerald-500",
+    bgColor: "bg-green-50 border-green-200",
+  },
+  {
+    id: "premium",
+    name: "Premium Bowl",
+    price: 99,
+    emoji: "💪",
+    tagline: "Protein-packed power bowl",
+    ingredientIds: ["mung", "chana", "paneer", "tomato", "corn"],
+    badge: "Best Value",
+    accentColor: "from-purple-400 to-violet-500",
+    bgColor: "bg-purple-50 border-purple-200",
+  },
+];
+
 export default function SaladBuilder() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [ordered, setOrdered] = useState(false);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
 
   const toggleIngredient = (id: string) => {
     setSelected((prev) => {
@@ -16,6 +54,13 @@ export default function SaladBuilder() {
       else next.add(id);
       return next;
     });
+    setActivePreset(null);
+    setOrdered(false);
+  };
+
+  const selectPreset = (preset: Preset) => {
+    setSelected(new Set(preset.ingredientIds));
+    setActivePreset(preset.id);
     setOrdered(false);
   };
 
@@ -37,15 +82,22 @@ export default function SaladBuilder() {
     [selectedIngredients]
   );
 
+  const currentPreset = PRESETS.find((p) => p.id === activePreset) ?? null;
+  const displayPrice = currentPreset ? currentPreset.price : totals.price;
+
   const handleWhatsApp = () => {
     if (selectedIngredients.length === 0) return;
     const names = selectedIngredients.map((i) => i.name).join(", ");
+    const presetLine = currentPreset
+      ? `*Bowl:* ${currentPreset.name} (Quick Pick)\n`
+      : "";
     const message = encodeURIComponent(
       `Hello, I want to order a salad! 🥗\n\n` +
+        presetLine +
         `*Ingredients:*\n${names}\n\n` +
         `*Total Calories:* ${totals.calories} kcal\n` +
         `*Total Protein:* ${totals.protein.toFixed(1)}g\n` +
-        `*Total Price:* ₹${totals.price}\n\n` +
+        `*Total Price:* ₹${displayPrice}\n\n` +
         `Please confirm my order. Thank you! 😊`
     );
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank");
@@ -70,9 +122,108 @@ export default function SaladBuilder() {
             </span>
           </h2>
           <p className="text-gray-500 text-lg max-w-lg mx-auto">
-            Select your favorite ingredients. We&apos;ll calculate the nutrition
-            instantly.
+            Pick a ready-made combo or build your own from scratch.
           </p>
+        </div>
+
+        {/* Quick Pick Section */}
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-xl">⚡</span>
+            <h3 className="text-xl font-bold text-gray-800">Quick Pick</h3>
+            <span className="text-sm text-gray-400 font-medium">
+              — No customization needed
+            </span>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {PRESETS.map((preset) => {
+              const presetIngredients = ingredients.filter((i) =>
+                preset.ingredientIds.includes(i.id)
+              );
+              const isActive = activePreset === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  onClick={() => selectPreset(preset)}
+                  className={`relative text-left rounded-3xl border-2 p-5 transition-all duration-250 ${
+                    isActive
+                      ? "border-green-500 bg-white shadow-lg shadow-green-100 scale-[1.02]"
+                      : `${preset.bgColor} hover:shadow-md hover:scale-[1.01]`
+                  }`}
+                >
+                  {/* Badge */}
+                  <span
+                    className={`absolute top-4 right-4 text-xs font-bold text-white px-2.5 py-1 rounded-full bg-gradient-to-r ${preset.accentColor}`}
+                  >
+                    {preset.badge}
+                  </span>
+
+                  {/* Active checkmark */}
+                  {isActive && (
+                    <span className="absolute top-4 left-4 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </span>
+                  )}
+
+                  <div className="flex items-center gap-3 mb-3 mt-1">
+                    <span className="text-4xl">{preset.emoji}</span>
+                    <div>
+                      <p className="text-lg font-black text-gray-900">
+                        {preset.name}
+                      </p>
+                      <p className="text-sm text-gray-500">{preset.tagline}</p>
+                    </div>
+                  </div>
+
+                  {/* Ingredient chips */}
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {presetIngredients.map((ing) => (
+                      <span
+                        key={ing.id}
+                        className="inline-flex items-center gap-1 bg-white text-gray-600 text-xs font-semibold px-2.5 py-1 rounded-full border border-gray-200"
+                      >
+                        {ing.emoji} {ing.name}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`text-3xl font-black bg-gradient-to-r ${preset.accentColor} bg-clip-text text-transparent`}
+                    >
+                      ₹{preset.price}
+                    </span>
+                    <span
+                      className={`text-sm font-semibold px-4 py-2 rounded-xl text-white bg-gradient-to-r ${preset.accentColor}`}
+                    >
+                      {isActive ? "Selected ✓" : "Select"}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 mb-8">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-sm font-semibold text-gray-400 px-2">
+            or build your own
+          </span>
+          <div className="flex-1 h-px bg-gray-200" />
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -94,6 +245,19 @@ export default function SaladBuilder() {
           {/* Nutrition Summary Panel */}
           <div className="lg:col-span-1">
             <div className="sticky top-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl border border-green-100 p-6 shadow-lg">
+              {/* Active preset indicator */}
+              {currentPreset && (
+                <div className="mb-4 flex items-center gap-2 bg-white rounded-2xl px-4 py-2.5 border border-green-100">
+                  <span className="text-lg">{currentPreset.emoji}</span>
+                  <span className="text-sm font-bold text-gray-700">
+                    {currentPreset.name}
+                  </span>
+                  <span className="ml-auto text-xs text-green-600 font-semibold bg-green-100 px-2 py-0.5 rounded-full">
+                    Quick Pick
+                  </span>
+                </div>
+              )}
+
               <h3 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
                 <span className="text-2xl">📊</span> Nutrition Summary
               </h3>
@@ -122,10 +286,12 @@ export default function SaladBuilder() {
               <div className="mt-5 bg-white rounded-2xl p-4 border border-green-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">💰</span>
-                  <span className="text-sm font-semibold text-gray-600">Total Price</span>
+                  <span className="text-sm font-semibold text-gray-600">
+                    Total Price
+                  </span>
                 </div>
                 <span className="text-2xl font-black text-green-600">
-                  ₹{totals.price}
+                  ₹{displayPrice}
                 </span>
               </div>
 
@@ -215,7 +381,13 @@ function IngredientCard({
         }`}
       >
         {isSelected && (
-          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+          <svg
+            className="w-3 h-3 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={3}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         )}
@@ -227,7 +399,11 @@ function IngredientCard({
       </span>
 
       {/* Name */}
-      <span className={`text-sm font-bold ${isSelected ? "text-green-700" : "text-gray-700"}`}>
+      <span
+        className={`text-sm font-bold ${
+          isSelected ? "text-green-700" : "text-gray-700"
+        }`}
+      >
         {ingredient.name}
       </span>
 
