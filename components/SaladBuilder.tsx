@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { ingredients, Ingredient } from "@/data/ingredients";
 
-const WHATSAPP_NUMBER = "919999999999"; // Replace with actual WhatsApp number
+const WHATSAPP_NUMBER = "917977120757";
 
 interface Preset {
   id: string;
