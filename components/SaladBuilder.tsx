@@ -46,6 +46,8 @@ export default function SaladBuilder() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [ordered, setOrdered] = useState(false);
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [spiceLevel, setSpiceLevel] = useState<"mild" | "medium" | "spicy">("medium");
+  const [note, setNote] = useState("");
 
   const toggleIngredient = (id: string) => {
     setSelected((prev) => {
@@ -91,14 +93,18 @@ export default function SaladBuilder() {
     const presetLine = currentPreset
       ? `*Bowl:* ${currentPreset.name} (Quick Pick)\n`
       : "";
+    const spiceEmoji = { mild: "🟢", medium: "🟡", spicy: "🔴" }[spiceLevel];
+    const noteLine = note.trim() ? `*Note:* ${note.trim()}\n` : "";
     const message = encodeURIComponent(
       `Hello, I want to order a salad! 🥗\n\n` +
         presetLine +
         `*Ingredients:*\n${names}\n\n` +
+        `*Spice Level:* ${spiceEmoji} ${spiceLevel.charAt(0).toUpperCase() + spiceLevel.slice(1)}\n` +
         `*Total Calories:* ${totals.calories} kcal\n` +
         `*Total Protein:* ${totals.protein.toFixed(1)}g\n` +
-        `*Total Price:* ₹${displayPrice}\n\n` +
-        `Please confirm my order. Thank you! 😊`
+        `*Total Price:* ₹${displayPrice}\n` +
+        noteLine +
+        `\nPlease confirm my order. Thank you! 😊`
     );
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank");
     setOrdered(true);
@@ -317,6 +323,51 @@ export default function SaladBuilder() {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Spice Level */}
+              <div className="mt-5">
+                <p className="text-sm font-semibold text-gray-500 mb-3">
+                  🌶️ Spice Level
+                </p>
+                <div className="flex gap-2">
+                  {(["mild", "medium", "spicy"] as const).map((level) => {
+                    const config = {
+                      mild: { label: "Mild", emoji: "🟢", active: "bg-green-500 text-white border-green-500" },
+                      medium: { label: "Medium", emoji: "🟡", active: "bg-yellow-400 text-white border-yellow-400" },
+                      spicy: { label: "Spicy", emoji: "🔴", active: "bg-red-500 text-white border-red-500" },
+                    }[level];
+                    return (
+                      <button
+                        key={level}
+                        onClick={() => setSpiceLevel(level)}
+                        className={`flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl border-2 text-xs font-bold transition-all duration-200 ${
+                          spiceLevel === level
+                            ? config.active
+                            : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
+                        }`}
+                      >
+                        <span className="text-base">{config.emoji}</span>
+                        {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Special Instructions */}
+              <div className="mt-4">
+                <p className="text-sm font-semibold text-gray-500 mb-2">
+                  📝 Special Instructions
+                </p>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="e.g. No onion, extra lemon..."
+                  rows={2}
+                  maxLength={200}
+                  className="w-full text-sm text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-100 transition"
+                />
               </div>
 
               {/* WhatsApp Order Button */}
