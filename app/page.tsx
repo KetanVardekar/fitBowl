@@ -1,13 +1,15 @@
 import Navbar from "@/components/Navbar";
+import ComingSoonBanner from "@/components/ComingSoonBanner";
 import Hero from "@/components/Hero";
-import SaladBuilder from "@/components/SaladBuilder";
 import HowItWorks from "@/components/HowItWorks";
+import SaladBuilder from "@/components/SaladBuilder";
 import WhyChooseUs from "@/components/WhyChooseUs";
 import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
     <main className="min-h-screen">
+      <ComingSoonBanner />
       <Navbar />
       <Hero />
       <div id="how-it-works">
